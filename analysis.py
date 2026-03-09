@@ -1,84 +1,101 @@
 from bitcoinrpc.authproxy import AuthServiceProxy
 
-# RPC connection
+# RPC connection details
 rpc_user = "hyperledgerz4040"
 rpc_password = "BitcoinTransactionAssignment2"
 rpc_port = 18443
 wallet_name = "testwallet"
 
 # Connect to wallet RPC
-rpc = AuthServiceProxy(f"http://{rpc_user}:{rpc_password}@127.0.0.1:{rpc_port}/wallet/{wallet_name}")
+rpc = AuthServiceProxy(
+    f"http://{rpc_user}:{rpc_password}@127.0.0.1:{rpc_port}/wallet/{wallet_name}"
+)
 
-print("Connected to Bitcoin Core RPC\n")
+print("Connected to Bitcoin Core RPC")
 
-# Input TXIDs from previous parts
-legacy_txid = input("Enter TXID of Legacy P2PKH transaction (Part 1): ").strip()
-segwit_txid = input("Enter TXID of SegWit transaction (Part 2): ").strip()
+# Get TXIDs from user (from Part 1 and Part 2 outputs)
+legacy_txid = input("\nEnter TXID of Legacy P2PKH transaction (from Part 1): ").strip()
+segwit_txid = input("Enter TXID of SegWit transaction (from Part 2): ").strip()
 
-# Fetch transactions
+# Fetch transaction details
 legacy_tx = rpc.getrawtransaction(legacy_txid, True)
 segwit_tx = rpc.getrawtransaction(segwit_txid, True)
 
-print("\n====================================")
-print("LEGACY P2PKH TRANSACTION ANALYSIS")
-print("====================================")
+# -------------------------------
+# LEGACY TRANSACTION ANALYSIS
+# -------------------------------
+
+print("\n==============================")
+print("Legacy P2PKH Transaction")
+print("==============================")
 
 print("TXID:", legacy_tx["txid"])
-print("Size (bytes):", legacy_tx["size"])
-print("Virtual Size (vbytes):", legacy_tx["vsize"])
+print("Size:", legacy_tx["size"], "bytes")
+print("Virtual Size:", legacy_tx["vsize"], "vbytes")
 print("Weight:", legacy_tx["weight"])
 
-print("\n--- Unlocking Script (scriptSig) ---")
+print("\n--- ScriptSig (Unlocking Script) ---")
 for vin in legacy_tx["vin"]:
-    if "scriptSig" in vin and vin["scriptSig"]:
+    if "scriptSig" in vin:
         print(vin["scriptSig"]["asm"])
 
-print("\n--- Locking Script (scriptPubKey) ---")
+print("\n--- ScriptPubKey (Locking Script) ---")
 for vout in legacy_tx["vout"]:
     print(vout["scriptPubKey"]["asm"])
 
 
-print("\n\n====================================")
-print("P2SH-P2WPKH SEGWIT TRANSACTION ANALYSIS")
-print("====================================")
+# -------------------------------
+# SEGWIT TRANSACTION ANALYSIS
+# -------------------------------
+
+print("\n==============================")
+print("P2SH-P2WPKH SegWit Transaction")
+print("==============================")
 
 print("TXID:", segwit_tx["txid"])
-print("Size (bytes):", segwit_tx["size"])
-print("Virtual Size (vbytes):", segwit_tx["vsize"])
+print("Size:", segwit_tx["size"], "bytes")
+print("Virtual Size:", segwit_tx["vsize"], "vbytes")
 print("Weight:", segwit_tx["weight"])
 
 print("\n--- scriptSig ---")
 for vin in segwit_tx["vin"]:
-    if "scriptSig" in vin and vin["scriptSig"]:
+    if "scriptSig" in vin:
         print(vin["scriptSig"]["asm"])
 
 print("\n--- Witness Data ---")
 for vin in segwit_tx["vin"]:
     if "txinwitness" in vin:
-        for w in vin["txinwitness"]:
-            print(w)
+        for item in vin["txinwitness"]:
+            print(item)
 
-print("\n--- scriptPubKey ---")
+print("\n--- ScriptPubKey ---")
 for vout in segwit_tx["vout"]:
     print(vout["scriptPubKey"]["asm"])
 
 
-print("\n\n====================================")
-print("TRANSACTION SIZE COMPARISON")
-print("====================================")
+# -------------------------------
+# SIZE COMPARISON
+# -------------------------------
 
-print(f"P2PKH size: {legacy_tx['size']} bytes")
-print(f"SegWit size: {segwit_tx['size']} bytes\n")
+print("\n==============================")
+print("Transaction Size Comparison")
+print("==============================")
 
-print(f"P2PKH vsize: {legacy_tx['vsize']} vbytes")
-print(f"SegWit vsize: {segwit_tx['vsize']} vbytes\n")
+print(f"P2PKH Transaction Size: {legacy_tx['size']} bytes")
+print(f"SegWit Transaction Size: {segwit_tx['size']} bytes")
 
-print(f"P2PKH weight: {legacy_tx['weight']}")
-print(f"SegWit weight: {segwit_tx['weight']}")
+print(f"P2PKH Virtual Size: {legacy_tx['vsize']} vbytes")
+print(f"SegWit Virtual Size: {segwit_tx['vsize']} vbytes")
 
-print("\n====================================")
+print(f"P2PKH Weight: {legacy_tx['weight']}")
+print(f"SegWit Weight: {segwit_tx['weight']}")
+
+print("\n------------------------------")
 
 if segwit_tx["vsize"] < legacy_tx["vsize"]:
-    print("Result: SegWit transaction uses fewer virtual bytes and is more efficient.")
+    print("Result: SegWit transaction is smaller in virtual size.")
 else:
-    print("Result: Legacy transaction is larger compared to SegWit.")
+    print("Result: Legacy transaction is larger.")
+
+print("\nSegWit separates signature data into the witness field.")
+print("Witness data counts less toward block weight, reducing transaction size and fees.")
