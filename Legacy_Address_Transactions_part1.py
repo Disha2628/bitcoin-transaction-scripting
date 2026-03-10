@@ -9,10 +9,20 @@ wallet_name = "testwallet"
 
 # --- Load or create wallet ---
 try:
+    # Attempt to load the wallet if it already exists
     rpc_connection.loadwallet(wallet_name)
+    print(f"Wallet '{wallet_name}' loaded successfully.")
 except Exception as e:
-    if "already loaded" not in str(e):
-        raise
+    # If the wallet file doesn't exist, create a new one
+    if "not found" in str(e).lower() or "does not exist" in str(e).lower() or "-18" in str(e):
+        rpc_connection.createwallet(wallet_name)
+        print(f"Wallet '{wallet_name}' created successfully.")
+    # If the wallet is already loaded, we can just proceed
+    elif "already loaded" in str(e).lower():
+        print(f"Wallet '{wallet_name}' is already active.")
+    else:
+        # If it's a different error, stop and show us what happened
+        raise e
 
 # --- Generate three legacy addresses ---
 address_A = rpc_connection.getnewaddress("", "legacy")
